@@ -1,7 +1,7 @@
 # define flags 
 CC = g++ # compiler
 CXX_FLAGS = -std=c++11 -I/usr/local/include # compiling flags
-LD_FLAGS = -L/usr/local/lib -lwiringPi # linking flags
+LD_FLAGS = -L/usr/local/lib -lpigpio -lpthread # linking flags
 
 # define files
 TARGET = main # produced executables
