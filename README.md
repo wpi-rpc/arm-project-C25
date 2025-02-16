@@ -30,4 +30,4 @@ sudo ./main
 ```
 
 ## PI Setup:
-The Raspberry Pi (PI) can be configured and communicated with in many ways. For this project, the PI was put on a metered ethernet network with a local PC sharing its WiFi. This was done by the two steps (1) enabling local PC to make its wifi network share-able, and (2) setting a manula metered connection with IPv4 addresse, netmask, and gateway of `10.42.0.3`, `255.255.255.0`, and `42.10.0.2` respectively. This should enable communication to ssh and share a WiFi interface. 
+The Raspberry Pi (PI) can be configured and communicated with in many ways. For this project, the PI was put on a metered ethernet network with a local PC sharing its WiFi. This was done by the two steps (1) enabling local PC to make its WiFi network share-able, and (2) setting a manual metered connection with IPv4 address, netmask, and gateway of `10.42.0.3`, `255.255.255.0`, and `42.10.0.2` respectively. This should enable communication to ssh and share a WiFi interface. 
