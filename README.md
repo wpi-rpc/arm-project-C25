@@ -16,18 +16,18 @@ sudo apt install pigpio
 #### pigpio initialize error:
 *pigpio* is responsible for handling servo motor control, however, initiating an executable program to run the pigpio daemon can cause problems if it is already running.
 
-The solution simply required the daemon to be reset by killing all uses of it so that it is ready to be used upon start of your program. This can be done by the command: 
+The solution simply required the daemon to be reset by killing all uses of it so that it is ready to be used upon the start of your program. This can be done by the command: 
 
 ```bash
 sudo killall pigpiod
 ```
 
 #### running the program:
-When running the program, the workspace is compiled into an executable by the local makefile while linking the required libraries. When going to run, the executable should be ran while as super-user with the command: 
+When running the program, the workspace is compiled into an executable by the local makefile while linking the required libraries. When going to run, the executable should be run as super-user with the command: 
 
 ```bash
 sudo ./main
 ```
 
 ## PI Setup:
-The Raspberry Pi (PI) can be configured and communicated with in many ways. For this project, the PI was put on a metered ethernet network with a local PC sharing its WiFi. This was done by the two steps (1) enabling local PC to make its WiFi network share-able, and (2) setting a manual metered connection with IPv4 address, netmask, and gateway of `10.42.0.3`, `255.255.255.0`, and `42.10.0.2` respectively. This should enable communication to ssh and share a WiFi interface. 
+The Raspberry Pi (PI) can be configured and communicated with in many ways. For this project, the PI was put on a metered ethernet network with a local PC sharing its WiFi. This was done by the three steps of (1) enabling the local PC to make its WiFi network share-able, (2) setting a manual metered connection with IPv4 address, netmask, and gateway on the PC as `42.10.0.3`, `255.255.255.0`, and `42.10.0.2` respectively, and (3) setting the IPv4 address, netmask, and gateway on the PI as `42.10.0.1`, `255.255.255.0`, and `42.10.0.2`. This should enable communication to ssh and share a WiFi interface. 
