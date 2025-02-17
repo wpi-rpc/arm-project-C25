@@ -51,14 +51,14 @@ int main() {
 
     // drive with pauses
     motor_A.drive(-90);
-    motor_B.drive(-90);
-    sleep(2);
+    motor_B.drive(-55);
+    time_sleep(0.5);
     motor_A.drive(90);
-    motor_B.drive(90);
-    sleep(2);
+    motor_B.drive(45);
+    time_sleep(0.5);
     motor_A.drive(0);
     motor_B.drive(0);
-    sleep(2);
+    time_sleep(0.5);
 
     printf("Done");
     // end use of pigpio library
