@@ -13,7 +13,7 @@ class Servo {
     
     const int PIN; // BCM pin number on the PI
     const int PWM_RANGE[2] = {500, 2500}; // usecs; range of PWM 
-
+    
     public: 
 
     /**
@@ -23,7 +23,10 @@ class Servo {
      */
     Servo(const int PIN) 
         :   PIN(PIN) {
-        gpioSetMode(PIN, PI_OUTPUT);
+    }
+
+    int getPin() const {
+        return PIN;
     }
 
     /**
@@ -41,27 +44,41 @@ class Servo {
 
 int main() {
     // initialize pigpio library setup; exit if failure
-    if(gpioInitialise() == -1) {
-        exit(EXIT_FAILURE);
-    }
+    //if(gpioInitialise() == -1) {
+    //    exit(EXIT_FAILURE);
+    //}
 
     // construct motors
     Servo motor_A = Servo(6); 
     Servo motor_B = Servo(13);
 
-    // drive with pauses
-    motor_A.drive(-90);
-    motor_B.drive(-55);
-    time_sleep(0.5);
-    motor_A.drive(90);
-    motor_B.drive(45);
-    time_sleep(0.5);
-    motor_A.drive(0);
-    motor_B.drive(0);
-    time_sleep(0.5);
+    pid_t pid = fork();
+    if(pid < 0) {
+        printf("Fork failed!\n");
+        exit(EXIT_FAILURE);
+    }
+    else if(pid == 0) {
+        gpioInitialise();
+        gpioSetMode(motor_B.getPin(), PI_OUTPUT);
+        motor_B.drive(0);
+        time_sleep(0.200);
+        gpioTerminate();
+        exit(0);
+    }
 
-    printf("Done");
+    // drive with pauses
+   // motor_A.drive(-90);
+    //motor_B.drive(-55);
+    //time_sleep(0);
+    //motor_A.drive(90);
+    //motor_B.drive(45);
+    //time_sleep(0);
+    //motor_A.drive(0);
+    //motor_B.drive(0);
+    //time_sleep(0);
+
+    //printf("Done");
     // end use of pigpio library
-    gpioTerminate();
+    //gpioTerminate();
     return 0;
 }
