@@ -25,7 +25,7 @@ class Servo {
      * range of [-90,+90] degrees such that zero degrees is the initial position and positive is counter-clockwise. 
      * @param degrees (int) : The specified degree position
      */
-    void drive(int degrees);
+    void position(int degrees);
 };
 
 #endif

@@ -13,7 +13,7 @@ int Servo::getPin() const {
     return PIN;
 }
 
-void Servo::drive(int degrees) {
+void Servo::position(int degrees) {
     // clamp degrees to mapped range of [0, 180] from [-90, +90]
     degrees = std::max(std::min(degrees + 90, 180), 0);  
     // compute servo position value from PWM pulse range 

@@ -1,3 +1,5 @@
+#include "Servo.h"
+
 #ifndef ROBOT_H
 #define ROBOT_H
 
@@ -6,6 +8,8 @@
  */
 class Robot {
     private:
+
+    Servo shoulder = Servo(13);
 
     public:
 

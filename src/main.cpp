@@ -2,6 +2,7 @@
 #include <pigpio.h>
 
 int main() {
+    gpioInitialise();
     // create robot and initialize
     Robot robot = Robot();
     robot.setup();
@@ -9,6 +10,6 @@ int main() {
     while(robot.loop() == 0) {
         time_sleep(robot.delay);
     }
-
+    gpioTerminate();
     return 0;
 }
