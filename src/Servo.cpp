@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <pigpio.h>
 #include <math.h>
+#include "handler.h"
 
 Servo::Servo(const int PIN)
     :   PIN(PIN) {
@@ -28,6 +29,20 @@ void Servo::step(int degrees) {
     servo_position += degrees;
 }
 
+void Servo::drive(int degrees, double acceleration) {
+    int initial_position = getPosition(); 
+    int final_position = degrees; 
+    int delta_position = std::abs(final_position - initial_position);
+    int sign = (final_position - initial_position >= 0) ? 1 : -1;
+
+    while(std::abs(getPosition() - initial_position) < delta_position) {
+        double time_step_millis = timeStep(initial_position, final_position, getPosition(), acceleration, 50);
+        printf("%d\n", time_step_millis);
+        step(sign);
+        time_sleep(time_step_millis);
+    }
+}
+
 void Servo::position(int degrees) {
     // clamp degrees to mapped range of [0, 180] from [-90, +90]
     degrees = std::max(std::min(degrees + 90, 180), 0);  
@@ -47,13 +62,13 @@ int Servo::timeStep(int initial_position, int final_position, int position, doub
     int time_step_millis = 10;
 
     // compute time-step by if speeding up or down (based on if position is in 1st or 2nd half of the traveling)
-    if(position < distance) {
-        int acclerating_time_step = 1000 * (1/2) * std::pow(2.0 / (acceleration * distance), 0.5);
-        time_step_millis = acclerating_time_step;
+    if(position < distance / 2) {
+        int acclerating_time_step = 1000.0 * (1.0/2.0) * std::pow(2.0 / (acceleration * nonZero(position, 0.1)), 0.5);
+        time_step_millis = std::min(max_time_step, acclerating_time_step);
     }
     else {
-        int decelerating_time_step = 1000 * (1/2) * std::pow(2.0 / (acceleration * (distance - distance)), 0.5);
-        time_step_millis = decelerating_time_step;
+        int decelerating_time_step = 1000.0 * (1.0/2.0) * std::pow(-2.0 / (acceleration * (nonZero(position, 0.01) - distance)), 0.5);
+        time_step_millis = std::min(max_time_step, decelerating_time_step);
     }
 
     return time_step_millis;

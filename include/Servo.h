@@ -5,7 +5,7 @@
  * @brief Represents an SG995 servo motor control. 
  **/
 class Servo {
-    private: 
+    public: 
     
     const int PIN; // BCM pin number on the PI
     const int PWM_RANGE[2] = {500, 2500}; // usecs; range of PWM 
@@ -59,6 +59,13 @@ class Servo {
      * @param degrees (int) : The specified relative change in position
      */
     void step(int degrees);
+
+    /**
+     * @brief Drives the servo to the specified position with the specified acceleration. 
+     * @param degrees (int) : The specified target position 
+     * @param acceleration (double) : The specified acceleration in [degrees / sec^2]
+     */
+    void drive(int degrees, double acceleration);
 };
 
 #endif
