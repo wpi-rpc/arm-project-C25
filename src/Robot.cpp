@@ -13,8 +13,12 @@ void Robot::setup() {
 int Robot::loop() {
     // main program loop
  
-    printf("Driving...\n");
+    //printf("Driving...\n");
+    shoulder.drive(45, 100);
+    elbow.drive(-45, 100);
+
     shoulder.drive(-45, 100);
     elbow.drive(45, 100);
+
     return 0;
 }

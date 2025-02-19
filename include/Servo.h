@@ -1,5 +1,7 @@
 #include <thread>
+#include <mutex>
 #include <memory>
+#include <tuple>
 
 #ifndef SERVO_H
 #define SERVO_H
@@ -13,7 +15,10 @@ class Servo {
     const int PIN; // BCM pin number on the PI
     const int HOME_POSITION; // home degree position of the servo
     const int PWM_RANGE[2] = {500, 2500}; // usecs; range of PWM 
-    std::unique_ptr<std::thread> driving_thread = std::unique_ptr<std::thread>();
+    bool spin_driver_thread = true; // allows threaded motor control to remain active; terminates thread when false
+    std::mutex driver_lock = std::mutex(); // mutex for handling access to drive_command ptr
+    std::unique_ptr<std::thread> driver_thread = std::unique_ptr<std::thread>(); // handles threaded motor control
+    std::unique_ptr<std::tuple<int, double>> drive_command = std::unique_ptr<std::tuple<int, double>>(); 
     int servo_position = 0;
     
     /**
