@@ -1,9 +1,5 @@
 #include "handler.h"
 #include <math.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <algorithm>
-#include <unistd.h>
 
 double nonZero(double x, double tolerance) {
     double magnitude = std::max(std::abs(x), std::abs(tolerance));

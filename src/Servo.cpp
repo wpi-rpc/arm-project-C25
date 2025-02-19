@@ -1,10 +1,6 @@
 #include "Servo.h"
-#include <algorithm>
-#include <unistd.h>
-#include <iostream>
-#include <stdio.h>
-#include <stdlib.h>
 #include <math.h>
+#include <cstdio>
 #include <memory>
 #include <pigpio.h>
 #include "handler.h"
@@ -17,6 +13,7 @@ Servo::Servo(const int PIN, const int HOME_POSITION)
 Servo::~Servo() {
     if(driving_thread && (*driving_thread).joinable()) {
         (*driving_thread).join();
+        driving_thread.reset();
     }
 }
 
