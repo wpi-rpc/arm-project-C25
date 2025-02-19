@@ -62,7 +62,10 @@ void Servo::driveBlocking(int degrees, double acceleration) {
 }
 
 void Servo::drive(int degrees, double acceleration) {
-    if(driving_thread && (*driving_thread).joinable()) {
+    if(std::abs(degrees - servo_position) <= 1) {
+        return;
+    }
+    else if(driving_thread && (*driving_thread).joinable()) {
         (*driving_thread).join();
         driving_thread.reset();
     }
