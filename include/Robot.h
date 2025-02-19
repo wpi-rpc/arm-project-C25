@@ -9,7 +9,8 @@
 class Robot {
     private:
 
-    Servo shoulder = Servo(13);
+    Servo shoulder = Servo(13, 0);
+    Servo elbow = Servo(6, 0);
 
     public:
 

@@ -4,13 +4,25 @@
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
-#include <pigpio.h>
 #include <math.h>
+#include <memory>
+#include <pigpio.h>
 #include "handler.h"
 
-Servo::Servo(const int PIN)
-    :   PIN(PIN) {
+Servo::Servo(const int PIN, const int HOME_POSITION)
+    :   PIN(PIN), HOME_POSITION(HOME_POSITION) {
     gpioSetMode(PIN, PI_OUTPUT); // set pin mode
+}
+
+Servo::~Servo() {
+    if(driving_thread && (*driving_thread).joinable()) {
+        (*driving_thread).join();
+    }
+}
+
+void Servo::home() {
+    position(HOME_POSITION);
+    servo_position = HOME_POSITION;
 }
 
 int Servo::getPin() const {
@@ -30,20 +42,35 @@ void Servo::step(int degrees) {
     servo_position += degrees;
 }
 
-void Servo::drive(int degrees, double acceleration) {
-    int initial_position = getPosition(); 
+void Servo::driveBlocking(int degrees, double acceleration) {
+    // define start and end angles 
+    int initial_position = servo_position; 
     int final_position = degrees; 
-    int delta_position = std::abs(final_position - initial_position);
+    // consider driving as a problem of traveling over a distance (magnitude) ignoring direction
+    int delta_position = std::abs(final_position - initial_position); // distance to travel
+    // take note of the direction
     int sign = (final_position - initial_position >= 0) ? 1 : -1;
 
-    while(std::abs(getPosition() - initial_position) <= delta_position) {
-        double time_step_millis = timeStep(initial_position, final_position, getPosition(), acceleration, 75);
-        std::cout << getPosition() << std::endl;
-        //printf("%f\n", getPosition());//time_step_millis);
+    // drive by stepping position with dynamic delays until distance has been traveled
+    while(std::abs(servo_position - initial_position) <= delta_position) {
+        // find dynamic time based on "how far along" current position `getPosition()` is from initial going to final position
+        double time_step_millis = timeStep(initial_position, final_position, servo_position, acceleration, 13);
+        // move motor by step and wait
         step(sign);
         time_sleep(time_step_millis / 1000.0);
     }
 }
+
+void Servo::drive(int degrees, double acceleration) {
+    if(driving_thread && (*driving_thread).joinable()) {
+        (*driving_thread).join();
+        driving_thread.reset();
+    }
+
+    driving_thread = std::make_unique<std::thread>(std::thread( [this, degrees, acceleration](){ 
+        driveBlocking(degrees, acceleration); 
+    } ));
+}    
 
 void Servo::position(int degrees) {
     // clamp degrees to mapped range of [0, 180] from [-90, +90]
@@ -54,23 +81,24 @@ void Servo::position(int degrees) {
     gpioServo(PIN, value);
 }
 
-int Servo::timeStep(int initial_position, int final_position, int position, double acceleration, int max_time_step) {
+int Servo::timeStep(int initial_position, int final_position, int position, double acceleration, double max_speed) {
     // clamp positions
     initial_position = std::max(-90, std::min(90, initial_position));
     final_position = std::max(-90, std::min(90, final_position));
     // compute distances
-    int distance = std::abs(final_position - initial_position);
-    position = std::abs(position - initial_position);
-    int time_step_millis = 10;
+    position = std::abs(position - initial_position); // position "already traveled to" from `position` from starting point ignoring direction
+    int distance = std::abs(final_position - initial_position); // overall distance to travel
+    int max_time_step_millis = 1000 / max_speed; // computed upper limit max time step to delay by given max speed
+    int time_step_millis = 10;  
 
     // compute time-step by if speeding up or down (based on if position is in 1st or 2nd half of the traveling)
     if(position < distance / 2) {
         int acclerating_time_step = 1000.0 * (1.0/2.0) * std::pow(2.0 / (acceleration * nonZero(position, 0.1)), 0.5);
-        time_step_millis = std::min(max_time_step, acclerating_time_step);
+        time_step_millis = std::min(max_time_step_millis, acclerating_time_step);
     }
     else {
         int decelerating_time_step = 1000.0 * (1.0/2.0) * std::pow(2.0 / (acceleration * (distance - nonZero(position, 0.01))), 0.5);
-        time_step_millis = std::min(max_time_step, decelerating_time_step);
+        time_step_millis = std::min(max_time_step_millis, decelerating_time_step);
     }
 
     return time_step_millis;

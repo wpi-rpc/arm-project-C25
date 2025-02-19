@@ -1,3 +1,6 @@
+#include <thread>
+#include <memory>
+
 #ifndef SERVO_H
 #define SERVO_H
 
@@ -8,7 +11,9 @@ class Servo {
     public: 
     
     const int PIN; // BCM pin number on the PI
+    const int HOME_POSITION; // home degree position of the servo
     const int PWM_RANGE[2] = {500, 2500}; // usecs; range of PWM 
+    std::unique_ptr<std::thread> driving_thread = std::unique_ptr<std::thread>();
     int servo_position = 0;
     
     /**
@@ -18,10 +23,10 @@ class Servo {
      * @param final_position (int) : The specified final degree position of the servo
      * @param position (int) : The specified position of the time step. 
      * @param acceleration (double) : The specified acceleration in [degrees / sec^2]
-     * @param max_time_step (int) : The specified maximum the time step in milliseconds that it can be
+     * @param max_speed (double) : The specified max speed in [degrees / sec]
      * @return The calculated time step in milliseconds  
      */
-    int timeStep(int initial_position, int final_position, int position, double acceleration, int max_time_step); 
+    int timeStep(int initial_position, int final_position, int position, double acceleration, double max_speed); 
 
     /**
      * @brief Drives the motor to the specified degrees position. Drives within a given
@@ -30,15 +35,43 @@ class Servo {
      */
     void position(int degrees);
 
+    /**
+     * @brief Drives the servo to a new local relative position. Pushing the servo position 
+     * in the direction and distance of the specified degrees. This is a relative local change
+     * in positioning when driving the servo, and as such, the magnitude of degrees should be small. 
+     * @note The specified degrees is clamped in range of [-10, +10] degrees. 
+     * @param degrees (int) : The specified relative change in position
+     */
+     void step(int degrees);
+
+     /**
+      * @brief Drives the servo to a given position with a specified acceleration. This is done
+      * as a blocking control-flow algorithm. 
+      * @param degrees (int) : The specified target position 
+      * @param acceleration (double) : The specified acceleration in [degrees / sec^2]
+      */
+     void driveBlocking(int degrees, double acceleration);
+
     public: 
 
     /**
      * @brief Constructs a Servo instance of the SG995 servo motor on the 
      * specified BCM pin. 
      * @param PIN (const inst) : The specified BCM pin
+     * @param HOME_POSITION (const int) : The specified home position of the servo in degrees
      */
-    Servo(const int PIN);
+    Servo(const int PIN, const int HOME_POSITION);
     
+    /**
+     * @brief Deconstructs a Servo instance. 
+     */
+    ~Servo();
+
+    /**
+     * @brief Homes the servo to drive to its home position in degrees. 
+     */
+    void home();
+
     /**
      * @brief The assigned BCM pin of the servo. 
      * @return The servo BCM pin.
@@ -52,17 +85,8 @@ class Servo {
     int getPosition();
 
     /**
-     * @brief Drives the servo to a new local relative position. Pushing the servo position 
-     * in the direction and distance of the specified degrees. This is a relative local change
-     * in positioning when driving the servo, and as such, the magnitude of degrees should be small. 
-     * @note The specified degrees is clamped in range of [-10, +10] degrees. 
-     * @param degrees (int) : The specified relative change in position
-     */
-    void step(int degrees);
-
-    /**
-     * @brief Drives the servo to the specified position with the specified acceleration. 
-     * @param degrees (int) : The specified target position 
+     * @brief Drives the servo to a given position with a specified acceleration. 
+     * @param degrees (int) : The specified target position
      * @param acceleration (double) : The specified acceleration in [degrees / sec^2]
      */
     void drive(int degrees, double acceleration);

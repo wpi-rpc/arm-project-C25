@@ -4,7 +4,9 @@
 
 void Robot::setup() {
     // robot initilization code
-    shoulder.position(0);
+    shoulder.home();
+    elbow.home();
+    // delay after homing; motor positioning unreliable until afterwards. 
     time_sleep(1);
 }
 
@@ -12,8 +14,9 @@ int Robot::loop() {
     // main program loop
  
     printf("Driving...\n");
-    shoulder.drive(-90, 115);
-    shoulder.drive(90, 115);
-    shoulder.drive(0, 115);
-    return 1;
+    shoulder.drive(-45, 100);
+    elbow.drive(45, 100);
+    //shoulder.driveBlocking(0, 100);
+    while(1) {}
+    return 0;
 }
