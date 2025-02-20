@@ -1,3 +1,5 @@
+#include "Servo.h"
+
 #ifndef ROBOT_H
 #define ROBOT_H
 
@@ -7,10 +9,13 @@
 class Robot {
     private:
 
+    Servo shoulder = Servo(13, 0);
+    Servo elbow = Servo(6, 0);
+
     public:
 
     // robot loop delay
-    const double delay = 0.01;
+    const double delay = 0.005;
 
     /**
      * @brief The setup for the robot. This is only called once upon running the progam. 

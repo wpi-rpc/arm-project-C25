@@ -1,6 +1,6 @@
 # define flags 
 CC = g++ # compiler
-CXX_FLAGS = -std=c++11 -I/usr/local/include -Iinclude # compiling flags
+CXX_FLAGS = -I/usr/local/include -Iinclude # compiling flags
 LD_FLAGS = -L/usr/local/lib -lpigpio -lpthread # linking flags
 
 # define project executables
