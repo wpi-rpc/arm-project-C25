@@ -32,6 +32,8 @@ class Servo {
 
     /**
      * @brief gets the range of the motor type in degrees
+     * @param type (motor_type) : the sepcified type of servo being used
+     * @return the range of the motor in degrees
      */
     std::tuple<int, int> getRange(motor_type type);
     /**
