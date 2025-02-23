@@ -5,8 +5,8 @@
 #include <pigpio.h>
 #include "handler.h"
 
-Servo::Servo(const int PIN, const int HOME_POSITION)
-    :   PIN(PIN), HOME_POSITION(HOME_POSITION) {
+Servo::Servo(const int PIN, const motor_type TYPE, const int HOME_POSITION)
+    :   PIN(PIN), TYPE(TYPE), HOME_POSITION(HOME_POSITION) {
     gpioSetMode(PIN, PI_OUTPUT); // set pin mode
     // initialize the motor driver
     driver_thread = std::make_unique<std::thread>(std::thread([this](){
@@ -57,6 +57,19 @@ int Servo::getPin() const {
 
 int Servo::getPosition() {
     return servo_position;
+}
+
+std::tuple<int, int> Servo::getRange(motor_type type) {
+    switch(type) {
+        //motor in range 0,180 degrees
+        case(motortypes::MG995) {
+            return std::make_tuple(0, 180);
+        }
+        //motor in range 0,270 degrees
+        case(motortypes::MS62) {
+            return std::make_tuple(0,270);
+        }
+    }
 }
 
 void Servo::step(int degrees) {
@@ -114,11 +127,14 @@ void Servo::drive(int degrees, double acceleration) {
 }    
 
 void Servo::position(int degrees) {
-    // clamp degrees to mapped range of [0, 180] from [-90, +90]
-    degrees = std::max(std::min(degrees + 90, 180), 0);  
+    // clamp degrees to mapped range of [0, 180] from [-90, +90],
+    // clamp degrees to mapped range of [0, 270] from [-135, +135],
+    // based off of the motor type
+    std::tuple<int, int> range = getRange(TYPE);
+    degrees = std::max(std::min(degrees + (std::get<1>(range) / 2), std::get<1>(range)), std::get<0>(range));  
     // compute servo position value from PWM pulse range 
     double delta = PWM_RANGE[1] - PWM_RANGE[0];
-    int value = (double)PWM_RANGE[0] + ((double)degrees / 180.0) * delta;
+    int value = (double)PWM_RANGE[0] + ((double)degrees / (double)std::get<1>(range)) * delta;
     gpioServo(PIN, value);
 }
 

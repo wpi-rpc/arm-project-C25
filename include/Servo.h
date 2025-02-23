@@ -13,6 +13,7 @@ class Servo {
     public: 
     
     const int PIN; // BCM pin number on the PI
+    const motor_type TYPE; // type of motor_type for a servo
     const int HOME_POSITION; // home degree position of the servo
     const int PWM_RANGE[2] = {500, 2500}; // usecs; range of PWM 
     bool spin_driver_thread = true; // allows threaded motor control to remain active; terminates thread when false
@@ -21,6 +22,18 @@ class Servo {
     std::unique_ptr<std::tuple<int, double>> drive_command = std::unique_ptr<std::tuple<int, double>>(); 
     int servo_position = 0;
     
+    /***
+     * @brief Defines the motor type
+     */
+    enum class motor_type {
+        MS62 = 0, // motor position range [0,270] degrees
+        MG995 = 1 // motor position range [0,180] degrees
+    } typedef motor_types;
+
+    /**
+     * @brief gets the range of the motor type in degrees
+     */
+    std::tuple<int, int> getRange(motor_type type);
     /**
      * @brief Calculates the time step delay at a given degree position provided the path the servo needs to rotate. 
      * Times steps are also determined by a desired acceleration
@@ -63,9 +76,10 @@ class Servo {
      * @brief Constructs a Servo instance of the SG995 servo motor on the 
      * specified BCM pin. 
      * @param PIN (const inst) : The specified BCM pin
+     * @param TYPE (const motor_type) : the specified motor type
      * @param HOME_POSITION (const int) : The specified home position of the servo in degrees
      */
-    Servo(const int PIN, const int HOME_POSITION);
+    Servo(const int PIN, const motor_type TYPE, const int HOME_POSITION);
     
     /**
      * @brief Deconstructs a Servo instance. 
