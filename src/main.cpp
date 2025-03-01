@@ -1,15 +1,17 @@
 #include "Robot.h"
-#include <pigpio.h>
+#include "pico/stdlib.h"
+#include "pico/multicore.h"
+#include "hardware/pwm.h"
 
 int main() {
-    gpioInitialise();
+    //gpioInitialise();
     // create robot and initialize
     Robot robot = Robot();
     robot.setup();
     // run program and spin
     while(robot.loop() == 0) {
-        time_sleep(robot.delay);
+        sleep_ms(robot.delay);
     }
-    gpioTerminate();
+    //gpioTerminate();
     return 0;
 }

@@ -14,8 +14,8 @@ class Robot {
 
     public:
 
-    // robot loop delay
-    const double delay = 0.005;
+    // robot loop delay in millis
+    const int delay = 5;
 
     /**
      * @brief The setup for the robot. This is only called once upon running the progam. 

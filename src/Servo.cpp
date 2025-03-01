@@ -2,17 +2,18 @@
 #include <math.h>
 #include <cstdio>
 #include <memory>
-#include <pigpio.h>
+#include "pico/stdlib.h"
+#include "hardware/pwm.h"
 #include "handler.h"
 
 Servo::Servo(const int PIN, const int HOME_POSITION)
     :   PIN(PIN), HOME_POSITION(HOME_POSITION) {
-    gpioSetMode(PIN, PI_OUTPUT); // set pin mode
+    gpio_set_function(PIN, GPIO_FUNC_PWM); // set pin mode
     // initialize the motor driver
     driver_thread = std::make_unique<std::thread>(std::thread([this](){
         // spin thread; wait for drive commands, run, and then dispose of. 
         while(spin_driver_thread) {
-            time_sleep(0.010);
+            sleep_ms(10);
             // critical region: only allow this thread access to drive_command contents/address
             driver_lock.lock();
             // check if command exists and run it if so
@@ -83,7 +84,7 @@ void Servo::driveBlocking(int degrees, double acceleration) {
         double time_step_millis = timeStep(initial_position, final_position, servo_position, acceleration, 13);
         // move motor by step and wait
         step(sign);
-        time_sleep(time_step_millis / 1000.0);
+        sleep_ms(time_step_millis);
     }
 }
 

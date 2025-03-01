@@ -1,13 +1,13 @@
 #include "Robot.h"
+#include "pico/stdlib.h"
 #include <cstdio>
-#include <pigpio.h>
 
 void Robot::setup() {
     // robot initilization code
     shoulder.home();
     elbow.home();
     // delay after homing; motor positioning unreliable until afterwards. 
-    time_sleep(1);
+    sleep_ms(1000);
 }
 
 int Robot::loop() {
