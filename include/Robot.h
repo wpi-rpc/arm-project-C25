@@ -15,7 +15,8 @@ class Robot {
     public:
 
     // robot loop delay in millis
-    const int delay = 5;
+    static const int DELAY_MILLIS = 5;
+    static const int DEFAULT_CLOCK_SPEED = 125000000; //MHz clock frequency
 
     /**
      * @brief The setup for the robot. This is only called once upon running the progam. 

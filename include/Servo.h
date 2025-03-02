@@ -1,7 +1,9 @@
-#include <thread>
-#include <mutex>
+#include "pico/multicore.h"
+#include "pico/mutex.h"
+#include <functional>
 #include <memory>
 #include <tuple>
+#include <vector>
 
 #ifndef SERVO_H
 #define SERVO_H
@@ -12,15 +14,25 @@
 class Servo {
     public: 
     
+    // static members 
+    static const int CLOCK_FREQUENCY = 50; //Hz
+    static const std::shared_ptr<std::vector<std::function<void()>>> SERVO_THREADS; // registered servo threads list
+    static void SERVO_MULTICORE(); // runs all servo threads
+
     const int PIN; // BCM pin number on the PI
+    const int PIN_SLICE; // PWM slice and channel of the pin
+    const int PIN_CHANNEL;
     const int HOME_POSITION; // home degree position of the servo
-    const int PWM_RANGE[2] = {500, 2500}; // usecs; range of PWM 
+    const int PWM_RANGE[2] = {3277, 6553}; //{500, 2500}; // usecs; range of PWM levels 
     bool spin_driver_thread = true; // allows threaded motor control to remain active; terminates thread when false
-    std::mutex driver_lock = std::mutex(); // mutex for handling access to drive_command ptr
-    std::unique_ptr<std::thread> driver_thread = std::unique_ptr<std::thread>(); // handles threaded motor control
+    mutex_t driver_lock; // mutex for handling access to drive_command ptr
+    std::function<void()> driver_thread = std::function<void()>(); // handles threaded motor control
     std::unique_ptr<std::tuple<int, double>> drive_command = std::unique_ptr<std::tuple<int, double>>(); 
-    int servo_position = 0;
-    
+    int initial_drive_position = 0; // initial position when motion profiling
+    int final_drive_position = 0; // destination position when motion profiling
+    int servo_position = 0; // current servo position [-90,+90]
+    bool init_drive_step = false; // flags if the drive stepping for motion profiling has been initialized
+
     /**
      * @brief Calculates the time step delay at a given degree position provided the path the servo needs to rotate. 
      * Times steps are also determined by a desired acceleration
@@ -49,13 +61,20 @@ class Servo {
      */
      void step(int degrees);
 
+    /**
+     * @brief Initializes the servo to begin driving with motion profile by iterative drive stepping.
+     * @param target_degrees (int) : The specified target position to drive to after initializing
+     */
+    void initDriveStep(int target_degrees);
+
      /**
       * @brief Drives the servo to a given position with a specified acceleration. This is done
-      * as a blocking control-flow algorithm. 
+      * by iteratively calling this method in a control-flow algorithm. 
       * @param degrees (int) : The specified target position 
       * @param acceleration (double) : The specified acceleration in [degrees / sec^2]
+      * @return Whether or not driving is done. 
       */
-     void driveBlocking(int degrees, double acceleration);
+     bool driveStep(int degrees, double acceleration);
 
     public: 
 
