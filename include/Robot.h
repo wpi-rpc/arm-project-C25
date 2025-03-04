@@ -9,13 +9,14 @@
 class Robot {
     private:
 
-    Servo shoulder = Servo(13, 0);
-    Servo elbow = Servo(6, 0);
+    Servo shoulder = Servo(0, 0);
+    Servo elbow = Servo(13, 0);
 
     public:
 
-    // robot loop delay
-    const double delay = 0.005;
+    // robot loop delay in millis
+    static const int DELAY_MILLIS = 5;
+    static const int DEFAULT_CLOCK_SPEED = 125000000; //MHz clock frequency
 
     /**
      * @brief The setup for the robot. This is only called once upon running the progam. 
