@@ -23,7 +23,7 @@ class Servo {
     const int PIN_SLICE; // PWM slice and channel of the pin
     const int PIN_CHANNEL;
     const int HOME_POSITION; // home degree position of the servo
-    const int PWM_RANGE[2] = {3277, 6553}; //{500, 2500}; // usecs; range of PWM levels 
+    const int PWM_RANGE[2] = {1638, 8192};//{3277, 6553}; //{500, 2500}; // usecs; range of PWM levels 
     bool spin_driver_thread = true; // allows threaded motor control to remain active; terminates thread when false
     mutex_t driver_lock; // mutex for handling access to drive_command ptr
     std::function<void()> driver_thread = std::function<void()>(); // handles threaded motor control

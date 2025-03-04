@@ -26,6 +26,7 @@ Servo::Servo(const int PIN, const int HOME_POSITION)
     :   PIN(PIN), HOME_POSITION(HOME_POSITION), PIN_SLICE(pwm_gpio_to_slice_num(PIN)), PIN_CHANNEL(pwm_gpio_to_channel(PIN)) {
     // set pin mode:
     gpio_set_function(PIN, GPIO_FUNC_PWM); 
+    mutex_init(&driver_lock);
     // set pin pwm frequency:
     const int MAX_INTEGER = 65535; // max number on 16-bit pico system
     int pico_clock_step = 2500000; // <=> Robot::DEFAULT_CLOCK_SPEED / Servo::CLOCK_FREQUENCY => step size to count from main pico clock counter
