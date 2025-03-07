@@ -1,14 +1,18 @@
 #include "Robot.h"
 #include "Servo.h"
+#include "AltThread.h"
 #include "pico/stdlib.h"
 #include "pico/multicore.h"
+#include "pico/cyw43_arch.h"
 #include "hardware/pwm.h"
 
 int main() {
-    // initialize libraries
+    // initialize std pico libraries
     stdio_init_all();
+    // initialize Wi-Fi chip
+    cyw43_arch_init();  
     // initialize multicore for servo driving
-    multicore_launch_core1(Servo::SERVO_MULTICORE);
+    AltThread::init();
     // create robot and initialize
     Robot robot = Robot();
     robot.setup();

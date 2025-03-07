@@ -29,6 +29,6 @@ add_executable(rpc_arm_C25
 )
 
 # pull in common dependencies
-target_link_libraries(rpc_arm_C25 pico_stdlib pico_cyw43_arch_none hardware_pwm pico_multicore)
+target_link_libraries(rpc_arm_C25 pico_stdlib pico_cyw43_arch_none hardware_pwm pico_multicore pico_time)
 # create map/bin/hex file etc.
 pico_add_extra_outputs(rpc_arm_C25)
