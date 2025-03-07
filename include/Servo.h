@@ -3,7 +3,7 @@
 #include <functional>
 #include <memory>
 #include <tuple>
-#include <vector>
+#include <set>
 
 #ifndef SERVO_H
 #define SERVO_H
@@ -11,14 +11,10 @@
 /**  
  * @brief Represents an SG995 servo motor control. 
  **/
-class Servo {
+class Servo : public std::enable_shared_from_this<Servo> {
     public: 
     
-    // static members 
     static const int CLOCK_FREQUENCY = 50; //Hz
-    static const std::shared_ptr<std::vector<std::function<void()>>> SERVO_THREADS; // registered servo threads list
-    static void SERVO_MULTICORE(); // runs all servo threads
-
     const int PIN; // BCM pin number on the PI
     const int PIN_SLICE; // PWM slice and channel of the pin
     const int PIN_CHANNEL;
@@ -30,8 +26,14 @@ class Servo {
     std::unique_ptr<std::tuple<int, double>> drive_command = std::unique_ptr<std::tuple<int, double>>(); 
     int initial_drive_position = 0; // initial position when motion profiling
     int final_drive_position = 0; // destination position when motion profiling
+    double drive_acceleration = 0; // acceleration when motion profiling
     int servo_position = 0; // current servo position [-90,+90]
     bool init_drive_step = false; // flags if the drive stepping for motion profiling has been initialized
+
+    /**
+     * @brief Iterative method for handling non-blocking driving for servo motion profiling control. 
+     */
+    void driverThread();
 
     /**
      * @brief Calculates the time step delay at a given degree position provided the path the servo needs to rotate. 
@@ -64,17 +66,16 @@ class Servo {
     /**
      * @brief Initializes the servo to begin driving with motion profile by iterative drive stepping.
      * @param target_degrees (int) : The specified target position to drive to after initializing
+     * @param acceleratoin (double) : The specified acceleration when driving
      */
-    void initDriveStep(int target_degrees);
+    void initDriveStep(int target_degrees, double acceleration);
 
      /**
       * @brief Drives the servo to a given position with a specified acceleration. This is done
       * by iteratively calling this method in a control-flow algorithm. 
-      * @param degrees (int) : The specified target position 
-      * @param acceleration (double) : The specified acceleration in [degrees / sec^2]
       * @return Whether or not driving is done. 
       */
-     bool driveStep(int degrees, double acceleration);
+     bool driveStep();
 
     public: 
 
@@ -84,7 +85,7 @@ class Servo {
      * @param PIN (const inst) : The specified BCM pin
      * @param HOME_POSITION (const int) : The specified home position of the servo in degrees
      */
-    Servo(const int PIN, const int HOME_POSITION);
+    Servo(Robot::ServoID PIN, const int HOME_POSITION);
     
     /**
      * @brief Deconstructs a Servo instance. 
