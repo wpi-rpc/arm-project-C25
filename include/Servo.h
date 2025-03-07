@@ -85,7 +85,7 @@ class Servo : public std::enable_shared_from_this<Servo> {
      * @param PIN (const inst) : The specified BCM pin
      * @param HOME_POSITION (const int) : The specified home position of the servo in degrees
      */
-    Servo(const int PIN, const int HOME_POSITION);
+    Servo(Robot::ServoID PIN, const int HOME_POSITION);
     
     /**
      * @brief Deconstructs a Servo instance. 

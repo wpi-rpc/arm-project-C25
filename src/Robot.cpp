@@ -18,16 +18,16 @@ uint32_t Robot::getMillis() {
 
 void Robot::setup() {
     // robot initilization code
-    shoulder.home();
+    base.home();
     // delay after homing; motor positioning unreliable until afterwards. 
-    sleep_ms(1000);
+    sleep_ms(5000);
 }
 
 int Robot::loop() {
     // main program loop
  
    /**/ //printf("Driving...\n");
-    shoulder.drive(45, 100);
+    base.drive(45, 100);
     //shoulder.position(-90);
     //sleep_ms(1000);
     //shoulder.position(90);
@@ -36,7 +36,7 @@ int Robot::loop() {
     //sleep_ms(1000);
     //shoulder.position(45);
     //sleep_ms(1000);*/
-    shoulder.drive(-45, 100);
+    base.drive(-45, 100);
 
     //shoulder.drive(-45, 100);
     //elbow.drive(45, 100);

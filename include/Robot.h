@@ -10,10 +10,25 @@
 class Robot {
     private:
 
-    Servo shoulder = Servo(0, 0);
-    Servo elbow = Servo(13, 0);
+    // Defined robot servos 
+    Servo end_effector = Servo(ServoIDs::END_EFFECTOR, 0); // (joint 4)
+    Servo wrist = Servo(ServoIDs::WRIST, 0); // (joint 3)
+    Servo elbow = Servo(ServoIDs::ELBOW, 0); // (joint 2)
+    Servo shoulder = Servo(ServoIDs::SHOULDER, 0); // (joint 1)
+    Servo base = Servo(ServoIDs::BASE, 0); // base to rotate about (joint 0)
 
     public:
+
+    /**
+     * @brief Motod IDs for each robot arm joint.
+     */
+    enum class ServoID {
+        BASE = 0, 
+        SHOULDER = 2, 
+        ELBOW = 1, 
+        WRIST = 3, 
+        END_EFFECTOR = 0
+    } typedef ServoIDs;
 
     // robot loop delay in millis
     static const int DELAY_MILLIS = 5;

@@ -29,10 +29,10 @@ void Servo::driverThread() {
     }
 }
 
-Servo::Servo(const int PIN, const int HOME_POSITION)
-    :   PIN(PIN), PIN_SLICE(pwm_gpio_to_slice_num(PIN)), PIN_CHANNEL(pwm_gpio_to_channel(PIN)), HOME_POSITION(HOME_POSITION) { 
+Servo::Servo(Robot::ServoID PIN, const int HOME_POSITION)
+    :   PIN((int)PIN), PIN_SLICE(pwm_gpio_to_slice_num((int)PIN)), PIN_CHANNEL(pwm_gpio_to_channel((int)PIN)), HOME_POSITION(HOME_POSITION) { 
     // set pin mode:
-    gpio_set_function(PIN, GPIO_FUNC_PWM); 
+    gpio_set_function((int)PIN, GPIO_FUNC_PWM); 
     mutex_init(&(this->driver_lock));
     // set pin pwm frequency:
     const int MAX_INTEGER = 65535; // max number on 16-bit pico system
