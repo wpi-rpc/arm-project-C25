@@ -4,8 +4,9 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/../Servo/**",
-                "${workspaceFolder}/include"
+                "${workspaceFolder}/include",
+                "${env:PICO_SDK_PATH}/**",
+                "${env:PICO_SDK_PATH}/src/rp2_common/pico_cyw43_arch/include"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

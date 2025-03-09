@@ -2,37 +2,30 @@
 #include <math.h>
 #include <cstdio>
 #include <memory>
-#include <pigpio.h>
+#include "pico/stdlib.h"
+#include "hardware/pwm.h"
+#include "pico/cyw43_arch.h"
 #include "handler.h"
+#include "Robot.h"
+#include "AltThread.h"
 
-Servo::Servo(const int PIN, const int HOME_POSITION)
-    :   PIN(PIN), HOME_POSITION(HOME_POSITION) {
-    gpioSetMode(PIN, PI_OUTPUT); // set pin mode
-    // initialize the motor driver
-    driver_thread = std::make_unique<std::thread>(std::thread([this](){
-        // spin thread; wait for drive commands, run, and then dispose of. 
-        while(spin_driver_thread) {
-            time_sleep(0.010);
-            // critical region: only allow this thread access to drive_command contents/address
-            driver_lock.lock();
-            // check if command exists and run it if so
-            if(drive_command) {
-                // supply driving command parameters (position, and acceleration for motion profiling)
-                int degrees = std::get<0>(*drive_command);
-                double acceleration = std::get<1>(*drive_command);
-
-                // begin servo threaded-driving
-                driveBlocking(degrees, acceleration); 
-                // command done; empty drive command
-                drive_command.reset();
-            }
-
-            // end of critical region: done handling drive_command
-            driver_lock.unlock();
+void Servo::driverThread() {
+    if(this->spin_driver_thread) {
+        // critical region: only allow this thread access to drive_command contents/address
+        mutex_enter_blocking(&(this->driver_lock));
+        // check if command exists and run it if so
+        if(this->drive_command && !this->init_drive_step) {
+            // supply driving command parameters (position, and acceleration for motion profiling)
+            int degrees = std::get<0>(*drive_command);
+            double acceleration = std::get<1>(*drive_command);
+            initDriveStep(degrees, acceleration);
         }
+<<<<<<< HEAD
 <<<<<<< Updated upstream
     }));
 =======
+=======
+>>>>>>> 9928a749435f0d4475f42a6aebcc8a4f2c75b7a8
         else if(drive_command && init_drive_step) { 
             this->spin_driver_thread = driveStep();
         }
@@ -42,7 +35,11 @@ Servo::Servo(const int PIN, const int HOME_POSITION)
     }
 }
 
+<<<<<<< HEAD
 Servo::Servo(const int PIN, const int HOME_POSITION)
+=======
+Servo::Servo(Robot::ServoID PIN, const int HOME_POSITION)
+>>>>>>> 9928a749435f0d4475f42a6aebcc8a4f2c75b7a8
     :   PIN((int)PIN), PIN_SLICE(pwm_gpio_to_slice_num((int)PIN)), PIN_CHANNEL(pwm_gpio_to_channel((int)PIN)), HOME_POSITION(HOME_POSITION) { 
     // set pin mode:
     gpio_set_function((int)PIN, GPIO_FUNC_PWM); 
@@ -60,25 +57,24 @@ Servo::Servo(const int PIN, const int HOME_POSITION)
 
     // register servo driving thread with the Servo multicore
     AltThread::registerThread([this](){driverThread();});
+<<<<<<< HEAD
 >>>>>>> Stashed changes
+=======
+>>>>>>> 9928a749435f0d4475f42a6aebcc8a4f2c75b7a8
 }
 
 Servo::~Servo() {
-    // check for existing driving thread; wait for its completion and reset ptr
-    if(driver_thread && (*driver_thread).joinable()) {
-        spin_driver_thread = false; // flag down to terminate thread
-        (*driver_thread).join(); // wait for thread
-        driver_thread.reset(); // reset
-    }
+    // check for existing driving thread; wait for its completion and reset ptr    
+    this->spin_driver_thread = false; // flag down to terminate this servo "thread"
     // reset any remaining command
-    if(drive_command) {
-        drive_command.reset();
+    if(this->drive_command) {
+        this->drive_command.reset();
     }
 }
 
 void Servo::home() {
     position(HOME_POSITION);
-    servo_position = HOME_POSITION;
+    this->servo_position = HOME_POSITION;
 }
 
 int Servo::getPin() const {
@@ -86,61 +82,76 @@ int Servo::getPin() const {
 }
 
 int Servo::getPosition() {
-    return servo_position;
+    return this->servo_position;
 }
 
 void Servo::step(int degrees) {
     // clamp step in position to a local change in degrees
     degrees = std::max(-10, std::min(10, degrees));
     // drive to local position; assume time is instantaneous. 
-    position(servo_position + degrees);
+    position(this->servo_position + degrees);
     // assume servo is at new position; update position.
-    servo_position += degrees;
+    this->servo_position += degrees;
 }
 
-void Servo::driveBlocking(int degrees, double acceleration) {
-    // define start and end angles 
-    int initial_position = servo_position; 
-    int final_position = degrees; 
+void Servo::initDriveStep(int target_degrees, double acceleration) {
+    if(!this->init_drive_step) {
+        // define start and end angles with acceleration
+        this->initial_drive_position = servo_position; 
+        this->final_drive_position = target_degrees; 
+        this->drive_acceleration = acceleration;
+        this->init_drive_step = true;
+    }
+}
+
+bool Servo::driveStep() {
     // consider driving as a problem of traveling over a distance (magnitude) ignoring direction
-    int delta_position = std::abs(final_position - initial_position); // distance to travel
+    int delta_position = std::abs(this->final_drive_position - this->initial_drive_position); // distance to travel
     // take note of the direction
-    int sign = (final_position - initial_position >= 0) ? 1 : -1;
+    int sign = (this->final_drive_position - this->initial_drive_position >= 0) ? 1 : -1;
 
     // drive by stepping position with dynamic delays until distance has been traveled
-    while(std::abs(servo_position - initial_position) <= delta_position) {
+    if(this->init_drive_step && std::abs(this->servo_position - this->initial_drive_position) <= delta_position) {
         // find dynamic time based on "how far along" current position `getPosition()` is from initial going to final position
-        double time_step_millis = timeStep(initial_position, final_position, servo_position, acceleration, 13);
+        double time_step_millis = timeStep(this->initial_drive_position, this->final_drive_position, this->servo_position, this->drive_acceleration, 13);
         // move motor by step and wait
         step(sign);
-        time_sleep(time_step_millis / 1000.0);
+        sleep_ms(time_step_millis);
+        return true;
     }
+
+    // done driving
+    this->init_drive_step = false;
+    // command done; empty drive command
+    this->drive_command.reset();
+    return false;
 }
 
 void Servo::drive(int degrees, double acceleration) {
     // critical region: only allow the main thread access to drive_command contents/address
-    driver_lock.lock(); // updating the command; only happens in critical region
+    mutex_enter_blocking(&(this->driver_lock)); // updating the command; only happens in critical region
     // check for and ignore noise
-    if(std::abs(servo_position - degrees) <= 1) {
-        driver_lock.unlock();
+    if(std::abs(this->servo_position - degrees) <= 1) {
+        mutex_exit(&(this->driver_lock));
         return;
     }
     // check for and ignore duplicate sequential commands
-    else if(drive_command && std::get<0>(*drive_command) == degrees && std::get<1>(*drive_command) == acceleration) {
-        driver_lock.unlock();
+    else if(this->drive_command && std::get<0>(*(this->drive_command)) == degrees && std::get<1>(*(this->drive_command)) == acceleration) {
+        mutex_exit(&(this->driver_lock));
         return;
     }
     // check for current command; delete it if present
-    else if(drive_command) {
-        drive_command.reset();
+    else if(this->drive_command) {
+        this->drive_command.reset();
     }
     
     // create new command with given parameters
-    drive_command = std::make_unique<std::tuple<int, double>>();
-    *drive_command = std::make_tuple(degrees, acceleration);
-    
+    this->drive_command = std::make_unique<std::tuple<int, double>>();
+    *(this->drive_command) = std::make_tuple(degrees, acceleration);
+    this->spin_driver_thread = true; // begin to spin thread for this servo
+
     // end of critical region: done handling drive_command
-    driver_lock.unlock();
+    mutex_exit(&(this->driver_lock));
 }    
 
 void Servo::position(int degrees) {
@@ -148,8 +159,8 @@ void Servo::position(int degrees) {
     degrees = std::max(std::min(degrees + 90, 180), 0);  
     // compute servo position value from PWM pulse range 
     double delta = PWM_RANGE[1] - PWM_RANGE[0];
-    int value = (double)PWM_RANGE[0] + ((double)degrees / 180.0) * delta;
-    gpioServo(PIN, value);
+    int level = (double)PWM_RANGE[0] + ((double)degrees / 180.0) * delta;
+    pwm_set_chan_level(PIN_SLICE, PIN_CHANNEL, level);
 }
 
 int Servo::timeStep(int initial_position, int final_position, int position, double acceleration, double max_speed) {
