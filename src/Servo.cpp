@@ -30,7 +30,37 @@ Servo::Servo(const int PIN, const int HOME_POSITION)
             // end of critical region: done handling drive_command
             driver_lock.unlock();
         }
+<<<<<<< Updated upstream
     }));
+=======
+        else if(drive_command && init_drive_step) { 
+            this->spin_driver_thread = driveStep();
+        }
+
+        // end of critical region: done handling drive_command
+        mutex_exit(&(this->driver_lock));
+    }
+}
+
+Servo::Servo(const int PIN, const int HOME_POSITION)
+    :   PIN((int)PIN), PIN_SLICE(pwm_gpio_to_slice_num((int)PIN)), PIN_CHANNEL(pwm_gpio_to_channel((int)PIN)), HOME_POSITION(HOME_POSITION) { 
+    // set pin mode:
+    gpio_set_function((int)PIN, GPIO_FUNC_PWM); 
+    mutex_init(&(this->driver_lock));
+    // set pin pwm frequency:
+    const int MAX_INTEGER = 65535; // max number on 16-bit pico system
+    int pico_clock_step = 2500000; // <=> Robot::DEFAULT_CLOCK_SPEED / Servo::CLOCK_FREQUENCY => step size to count from main pico clock counter
+    // Notice: pico_clock_step is too large for the 16-bit pwm wrap value; rescale and map the step by the max 16-bit integer to be within allowable range
+    // set pwm conditions; 
+    pwm_set_wrap(PIN_SLICE, MAX_INTEGER); // set wrap to needed time for servo frequency; 
+    // if sys clock is rescaled below to use full 16-bit range of the wrap, then let the wrap be the max 16-bit integer
+    pwm_set_clkdiv(PIN_SLICE, (double)pico_clock_step / (double)MAX_INTEGER); // rescale sys clock by 2 magnitudes 
+    pwm_set_phase_correct(PIN_SLICE, false);
+    pwm_set_enabled(PIN_SLICE, true);
+
+    // register servo driving thread with the Servo multicore
+    AltThread::registerThread([this](){driverThread();});
+>>>>>>> Stashed changes
 }
 
 Servo::~Servo() {
