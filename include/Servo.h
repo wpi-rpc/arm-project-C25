@@ -11,7 +11,7 @@
 /**  
  * @brief Represents an SG995 servo motor control. 
  **/
-class Servo : public std::enable_shared_from_this<Servo> {
+class Servo {
     public: 
     
     static const int CLOCK_FREQUENCY = 50; //Hz
@@ -85,7 +85,7 @@ class Servo : public std::enable_shared_from_this<Servo> {
      * @param PIN (const inst) : The specified BCM pin
      * @param HOME_POSITION (const int) : The specified home position of the servo in degrees
      */
-    Servo(Robot::ServoID PIN, const int HOME_POSITION);
+    Servo(const int PIN, const int HOME_POSITION);
     
     /**
      * @brief Deconstructs a Servo instance. 

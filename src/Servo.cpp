@@ -20,12 +20,7 @@ void Servo::driverThread() {
             double acceleration = std::get<1>(*drive_command);
             initDriveStep(degrees, acceleration);
         }
-<<<<<<< HEAD
-<<<<<<< Updated upstream
-    }));
-=======
-=======
->>>>>>> 9928a749435f0d4475f42a6aebcc8a4f2c75b7a8
+
         else if(drive_command && init_drive_step) { 
             this->spin_driver_thread = driveStep();
         }
@@ -35,11 +30,7 @@ void Servo::driverThread() {
     }
 }
 
-<<<<<<< HEAD
 Servo::Servo(const int PIN, const int HOME_POSITION)
-=======
-Servo::Servo(Robot::ServoID PIN, const int HOME_POSITION)
->>>>>>> 9928a749435f0d4475f42a6aebcc8a4f2c75b7a8
     :   PIN((int)PIN), PIN_SLICE(pwm_gpio_to_slice_num((int)PIN)), PIN_CHANNEL(pwm_gpio_to_channel((int)PIN)), HOME_POSITION(HOME_POSITION) { 
     // set pin mode:
     gpio_set_function((int)PIN, GPIO_FUNC_PWM); 
@@ -57,10 +48,6 @@ Servo::Servo(Robot::ServoID PIN, const int HOME_POSITION)
 
     // register servo driving thread with the Servo multicore
     AltThread::registerThread([this](){driverThread();});
-<<<<<<< HEAD
->>>>>>> Stashed changes
-=======
->>>>>>> 9928a749435f0d4475f42a6aebcc8a4f2c75b7a8
 }
 
 Servo::~Servo() {

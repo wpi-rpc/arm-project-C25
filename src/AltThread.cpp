@@ -35,7 +35,7 @@ void AltThread::init() {
             // run all threads and pulse 
             for(auto thread : AltThread::threads) 
                 thread();
-            AltThread::pulse();
+            //AltThread::pulse();
             sleep_ms(AltThread::DELAY_MILLIS);
         }
     });

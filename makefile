@@ -10,7 +10,7 @@ build:
 	rm -rf build && mkdir build && cd build && cmake .. && cd ..
 # generates uf2 executable for 
 uf2: 
-	cd build && make -j`nproc` && cd ..
+	cd build && make -j`nproc` && cd .. && python3 makefsdata.py 
 create: build uf2
 
 

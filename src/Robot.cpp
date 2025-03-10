@@ -18,62 +18,14 @@ uint32_t Robot::getMillis() {
 
 void Robot::setup() {
     // robot initilization code
-<<<<<<< HEAD
-<<<<<<< Updated upstream
-    shoulder.home();
-    elbow.home();
-=======
     base.home();
     shoulder.home();
     elbow.home();
-    wrist.home();
-    end_effector.home();
->>>>>>> Stashed changes
-=======
-    base.home();
->>>>>>> 9928a749435f0d4475f42a6aebcc8a4f2c75b7a8
     // delay after homing; motor positioning unreliable until afterwards. 
     sleep_ms(5000);
 }
 
 int Robot::loop() {
     // main program loop
- 
-<<<<<<< HEAD
-<<<<<<< Updated upstream
-    //printf("Driving...\n");
-    shoulder.drive(45, 100);
-    elbow.drive(-45, 100);
-
-    shoulder.drive(-45, 100);
-    elbow.drive(45, 100);
-=======
-   /**/ //printf("Driving...\n");
-    //base.drive(45, 200);
-    elbow.drive(90, 200);
-    elbow.drive(-45, 200);
-=======
-   /**/ //printf("Driving...\n");
-    base.drive(45, 100);
->>>>>>> 9928a749435f0d4475f42a6aebcc8a4f2c75b7a8
-    //shoulder.position(-90);
-    //sleep_ms(1000);
-    //shoulder.position(90);
-    //sleep_ms(5000);
-    //shoulder.position(-45);
-    //sleep_ms(1000);
-    //shoulder.position(45);
-    //sleep_ms(1000);*/
-<<<<<<< HEAD
-    //base.drive(-45, 200);
-    //wrist.drive(90, 50);
->>>>>>> Stashed changes
-=======
-    base.drive(-45, 100);
->>>>>>> 9928a749435f0d4475f42a6aebcc8a4f2c75b7a8
-
-    //shoulder.drive(-45, 100);
-    //elbow.drive(45, 100);
-    
     return 0;
 }

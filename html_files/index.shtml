@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <!-- define setup -->
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale:1.0">
+        <title>RPC 3-DOF Arm Controller</title>
+        <!-- define joystick styles -->
+        <style>
+            /* import font families */
+            @font-face {
+                font-family: 'OCR A Std';
+                src: local('OCR A Std'), url('https://fonts.gstatic.com/s/ocra/v8/64SdbF-ufGpizMmpWx0rr5bnJW3buQ.ttf') format('truetype');
+            }
+
+            /* web server styles */
+            #controller-shell-container {
+                width: 35em; height: 15em;
+                background-color: steelblue;
+                border: 3px solid black;
+                border-radius: 15%;
+                padding: 2%;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                margin: 5% auto;
+            }
+            #joystick-shell-container {
+                width: 100%; height: 100%;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+            }
+            #controller-shell-container > div:first-child {
+                font-size: 125%;
+                font-weight: bold;
+                font-family: 'OCR A Std', monospace;
+            }
+            #controller-container {
+                width: 30em; height: 10em;
+                background-color: darkgrey;
+                border: 3px solid black;
+                padding: 3%;
+                border-radius: 15%;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            .joystick-row {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                gap: 12em;
+            }
+            /* joystick UI styles */
+            #joystick-container-1, #joystick-container-2 {
+                width: 6em; height:  6em;
+                background-color: lightgrey;
+                border-radius: 50%;
+                position: relative;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 2px solid black;
+                margin: 5% auto;
+            }
+            #joystick-1, #joystick-2 {
+                width: 3em; height: 3em;
+                background-color: darkslategrey;
+                border-radius: 50%;
+                position: absolute;
+                left: 50%; right: 50%;
+                transform: translate(-50%, -50%);
+                cursor: grab;
+            }
+        </style>
+    </head>
+    <body>
+        <a href="/led.cgi?led=1"><button>ON</button></a>
+        <a href="/led.cgi?led=0"><button>OFF</button></a>
+
+        <div id="controller-shell-container"> 
+            <div>RPC-C25 Robotic Arm Controller</div>
+            <div>Move joysticks for controlling the end-effector</div>
+            <div id="controller-container"> 
+                <div class="joystick-row">
+                    <div id="joystick-shell-container">
+                        <div id="joystick-container-1">
+                            <div id="joystick-1"></div>
+                        </div>
+                        <div>X-Y Plane</div>
+                        
+                    </div>
+                    
+                    <div id="joystick-shell-container">
+                        <div id="joystick-container-2">
+                            <div id="joystick-2"></div>
+                        </div>
+                        <div>Z-Claw</div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- server scripts below -->
+        <script>
+            function sendJoystickData(url, timeout, timeout_ms, sending_data) {
+                if(timeout) 
+                    clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                    if(sending_data)
+                        return;
+                    sending_data = true;
+                
+                    fetch(url)
+                        .then(response => console.log("Joystick data sent:", url))
+                        .catch(error => console.error("Error sending joystick data:", error));
+                }, timeout_ms); 
+            }
+
+            function setupJoystick(joystick_element, container_element, controller) {
+                // "this" joystick elements
+                const joystick = joystick_element;
+                const container = container_element;
+                // set initial position and status 
+                joystick.style.left = "50%";
+                joystick.style.top = "50%";
+                let is_dragging = false; 
+                let is_sending_data = false;
+                let update_timeout = null;
+                let timeout_ms = 200;
+
+                let prev_delta_x = 0;
+                let prev_delta_y = 0;
+                let delta_x = 0;
+                let delta_y = 0;
+                
+                // update flag by mouse activity
+                joystick.addEventListener("mousedown", () => {
+                    is_dragging = true;
+                });
+
+                document.addEventListener("mouseup", () => {
+                    is_dragging = false; 
+                    // drift joystick to center position
+                    joystick.style.transition = "left 0.5s ease-out, top 0.5s ease-out";
+                    joystick.style.left = "50%";
+                    joystick.style.top = "50%";
+                });
+
+                document.addEventListener("mousemove", (event) => {
+                    // do nothing if not moving cursor
+                    if(!is_dragging) 
+                        return;
+
+                    const rect = container.getBoundingClientRect();
+                    const center_x = rect.left + (rect.width / 2);
+                    const center_y = rect.top + (rect.height / 2);
+
+                    delta_x = event.clientX - center_x;
+                    delta_y = event.clientY - center_y;
+                    const distance = Math.sqrt((delta_x * delta_x) + (delta_y * delta_y));
+                    const max_radius = (rect.width / 2) - (joystick.clientWidth / 2);
+
+                    // restrict movement to inside the outer-circle joystick container
+                    if(distance > max_radius) {
+                        distance = max_radius;
+                        const angle = Math.atan2(delta_y, delta_x);
+                        delta_x = max_radius * Math.cos(angle);
+                        delta_y = max_radius * Math.sin(angle);
+                    }
+
+                    joystick.style.transition = "left 0.2s ease-out, top 0.2s ease-out";
+                    joystick.style.left = `${(rect.width / 2) + delta_x}px`;
+                    joystick.style.top = `${(rect.height / 2) + delta_y}px`;
+
+                    if(Math.abs(delta_x - prev_delta_x) > 2 || Math.abs(delta_y - prev_delta_y) > 2) { 
+                        prev_delta_x = delta_x;
+                        prev_delta_y = delta_y;
+                        scaler = Math.abs(distance / max_radius);
+                        const url = `/joy.cgi?${controller}_dx=${(scaler * delta_x).toFixed(2)}&${controller}_dy=${(scaler * delta_y).toFixed(2)}`;
+                        sendJoystickData(url, update_timeout, timeout_ms, is_sending_data);
+                    }
+                });
+            }
+
+            const joystick_left = document.getElementById("joystick-1");
+            const container_left = document.getElementById("joystick-container-1");
+            setupJoystick(joystick_left, container_left, "joyl");
+           
+            const joystick_right = document.getElementById("joystick-2");
+            const container_right = document.getElementById("joystick-container-2");
+            setupJoystick(joystick_right, container_right, "joyr"); 
+
+        </script>
+    </body>
+</html>

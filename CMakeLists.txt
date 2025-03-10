@@ -28,7 +28,24 @@ add_executable(rpc_arm_C25
     ${header_files}
 )
 
+target_include_directories(rpc_arm_C25 PRIVATE 
+    ${CMAKE_CURRENT_LIST_DIR} 
+    ${CMAKE_SOURCE_DIR}/include 
+)
+
 # pull in common dependencies
-target_link_libraries(rpc_arm_C25 pico_stdlib pico_cyw43_arch_none hardware_pwm pico_multicore pico_time)
+target_link_libraries(rpc_arm_C25 
+    pico_cyw43_arch_lwip_threadsafe_background 
+    pico_cyw43_arch_none 
+    pico_lwip_http 
+    pico_stdlib 
+    hardware_pwm 
+    pico_multicore 
+    pico_time 
+)
+
+# enable comms
+pico_enable_stdio_usb(rpc_arm_C25 1)
+pico_enable_stdio_uart(rpc_arm_C25 0)
 # create map/bin/hex file etc.
 pico_add_extra_outputs(rpc_arm_C25)
