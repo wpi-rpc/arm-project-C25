@@ -138,20 +138,21 @@
                 let delta_x = 0;
                 let delta_y = 0;
                 
-                // update flag by mouse activity
-                joystick.addEventListener("mousedown", () => {
-                    is_dragging = true;
-                });
 
-                document.addEventListener("mouseup", () => {
+                function guiDown(event) {
+                    is_dragging = true;
+                    event.preventDefault();    
+                }
+
+                function guiUp() {
                     is_dragging = false; 
                     // drift joystick to center position
                     joystick.style.transition = "left 0.5s ease-out, top 0.5s ease-out";
                     joystick.style.left = "50%";
                     joystick.style.top = "50%";
-                });
+                }
 
-                document.addEventListener("mousemove", (event) => {
+                function guiMove(event) {
                     // do nothing if not moving cursor
                     if(!is_dragging) 
                         return;
@@ -160,14 +161,23 @@
                     const center_x = rect.left + (rect.width / 2);
                     const center_y = rect.top + (rect.height / 2);
 
-                    delta_x = event.clientX - center_x;
-                    delta_y = event.clientY - center_y;
+                    let client_x, client_y;
+                    if(event.type.startsWith("touch")) {
+                        client_x = event.touches[0].clientX;
+                        client_y = event.touches[0].clientY;
+                    }
+                    else {
+                        client_x = event.clientX;
+                        client_y = event.clientY;
+                    }
+
+                    delta_x = client_x - center_x;
+                    delta_y = client_y - center_y;
                     const distance = Math.sqrt((delta_x * delta_x) + (delta_y * delta_y));
                     const max_radius = (rect.width / 2) - (joystick.clientWidth / 2);
 
                     // restrict movement to inside the outer-circle joystick container
                     if(distance > max_radius) {
-                        distance = max_radius;
                         const angle = Math.atan2(delta_y, delta_x);
                         delta_x = max_radius * Math.cos(angle);
                         delta_y = max_radius * Math.sin(angle);
@@ -180,11 +190,18 @@
                     if(Math.abs(delta_x - prev_delta_x) > 2 || Math.abs(delta_y - prev_delta_y) > 2) { 
                         prev_delta_x = delta_x;
                         prev_delta_y = delta_y;
-                        scaler = Math.abs(distance / max_radius);
-                        const url = `/joy.cgi?${controller}_dx=${(scaler * delta_x).toFixed(2)}&${controller}_dy=${(scaler * delta_y).toFixed(2)}`;
+                        const url = `/joy.cgi?${controller}_dx=${(delta_x).toFixed(2)}&${controller}_dy=${(delta_y).toFixed(2)}`;
                         sendJoystickData(url, update_timeout, timeout_ms, is_sending_data);
                     }
-                });
+                }
+
+                // update flag by mouse and touch-screen activity
+                joystick.addEventListener("mousedown", guiDown);
+                document.addEventListener("mouseup", guiUp);
+                document.addEventListener("mousemove", guiMove);
+                joystick.addEventListener("touchstart", guiDown);
+                document.addEventListener("touchend", guiUp);
+                document.addEventListener("touchmove", guiMove);
             }
 
             const joystick_left = document.getElementById("joystick-1");

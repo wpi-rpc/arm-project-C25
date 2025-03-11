@@ -1,4 +1,5 @@
 #include "Robot.h"
+#include "CommonGatewayInterface.h"
 #include "pico/stdlib.h"
 #include "pico/cyw43_arch.h"
 #include "pico/time.h"
@@ -27,5 +28,9 @@ void Robot::setup() {
 
 int Robot::loop() {
     // main program loop
+    char* data[4];
+    CommonGatewayInterface::read(data);
+    printf("Left: (%f, %f), Right: (%f, %f)\n", atof(data[0]), atof(data[1]), atof(data[2]), atof(data[3]));
+    sleep_ms(250);
     return 0;
 }

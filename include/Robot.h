@@ -9,7 +9,6 @@
  * @brief Represents the high-level infrastructure of the Robot Arm. 
  */
 class Robot {
-
     public:
 
     // robot loop delay

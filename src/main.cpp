@@ -1,16 +1,16 @@
 #include "Robot.h"
 #include "AltThread.h"
+#include "CommonGatewayInterface.h"
 #include "pico/stdlib.h"
 #include "pico/cyw43_arch.h"
 #include "hardware/pwm.h"
 
 #include "lwip/apps/httpd.h"
 #include "lwipopts.h"
-#include "cgi.h"
 
 // server ip: autoreg-6781393.dyn.wpi.edu
-const char WIFI_SSID[] = "WPI-PSK"; 
-const char WIFI_PASSWORD[] = "{WtSu\":owj0Ts9I{"; 
+const char WIFI_SSID[] = "Galaxy_A53";//"WPI-PSK"; 
+const char WIFI_PASSWORD[] = "cngj3643";//"{WtSu\":owj0Ts9I{"; 
 
 int main() {
     // initialize std pico libraries
@@ -24,12 +24,10 @@ int main() {
         printf("attempting to connect...\n");
     }
 
-    // successful WiFi connection
-    printf("Connected!\n");
-    // initialize web server
-    httpd_init();
-    cgi_init();
-
+    printf("connected to %s\n", WIFI_SSID);
+    // initialize web server and CGI
+    httpd_init(); 
+    CommonGatewayInterface::init();
     // initialize multicore for servo driving
     AltThread::init();
     // create robot and initialize
