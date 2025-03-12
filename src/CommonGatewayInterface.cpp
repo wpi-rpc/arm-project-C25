@@ -15,7 +15,6 @@ const char* CommonGatewayInterface::handler(int i_index, int i_num_params, char*
         }
     }
 
-    printf("\n");
     return "/index.shtml";
 }
 

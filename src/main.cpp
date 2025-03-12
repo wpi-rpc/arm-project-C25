@@ -8,9 +8,37 @@
 #include "lwip/apps/httpd.h"
 #include "lwipopts.h"
 
-// server ip: autoreg-6781393.dyn.wpi.edu
-const char WIFI_SSID[] = "Galaxy_A53";//"WPI-PSK"; 
-const char WIFI_PASSWORD[] = "cngj3643";//"{WtSu\":owj0Ts9I{"; 
+// wifi always enabled and accessed up running.
+// macro either enables campus or other wifi connection
+// #define ENABLE_WPI_WIRELESS_WIFI 
+
+// campus and other wifi network info
+#define WPI_WIFI_SSID           "WPI-PSK"
+#define WPI_WIFI_PASSWORD       "{WtSu\":owj0Ts9I{"
+#define OTHER_WIFI_SSID         "Galaxy_A53"
+#define OTHER_WIFI_PASSWORD     "cngj3643"
+
+/**************************************************/
+/* DEVICE IP ADDRESS / WEBSITE URL:               */
+/*                                                */
+/* WPI WIFI:   http:/autoreg-6781393.dyn.wpi.edu  */
+/* OTHER WIFI: http://192.168.194.145/            */
+/**************************************************/ 
+
+// device wifi ssid
+const char WIFI_SSID[] = 
+#ifdef ENABLE_WPI_WIRELESS_WIFI 
+    WPI_WIFI_SSID; 
+#else 
+    OTHER_WIFI_SSID; 
+#endif
+// device wifi password
+const char WIFI_PASSWORD[] = 
+#ifdef ENABLE_WPI_WIRELESS_WIFI 
+    WPI_WIFI_SSID; 
+#else 
+    OTHER_WIFI_PASSWORD; 
+#endif
 
 int main() {
     // initialize std pico libraries

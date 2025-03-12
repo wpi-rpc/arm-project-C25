@@ -61,7 +61,7 @@ class Servo {
      * @note The specified degrees is clamped in range of [-10, +10] degrees. 
      * @param degrees (int) : The specified relative change in position
      */
-     void step(int degrees);
+    void step(int degrees);
 
     /**
      * @brief Initializes the servo to begin driving with motion profile by iterative drive stepping.

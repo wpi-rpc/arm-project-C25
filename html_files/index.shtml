@@ -14,7 +14,7 @@
             }
 
             /* web server styles */
-            #controller-shell-container {
+            #controller-container-labeled {
                 width: 35em; height: 15em;
                 background-color: steelblue;
                 border: 3px solid black;
@@ -26,14 +26,14 @@
                 align-items: center;
                 margin: 5% auto;
             }
-            #joystick-shell-container {
-                width: 100%; height: 100%;
+            #joystick-left-container-labeled, #joystick-right-container-labeled {
+                width: 12em; height: 12em;
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
                 align-items: center;
             }
-            #controller-shell-container > div:first-child {
+            #controller-container-labeled > div:first-child {
                 font-size: 125%;
                 font-weight: bold;
                 font-family: 'OCR A Std', monospace;
@@ -52,10 +52,10 @@
                 display: flex;
                 justify-content: center;
                 align-items: center;
-                gap: 12em;
+                gap: 8em;
             }
             /* joystick UI styles */
-            #joystick-container-1, #joystick-container-2 {
+            #joystick-container-left, #joystick-container-right {
                 width: 6em; height:  6em;
                 background-color: lightgrey;
                 border-radius: 50%;
@@ -66,7 +66,7 @@
                 border: 2px solid black;
                 margin: 5% auto;
             }
-            #joystick-1, #joystick-2 {
+            #joystick-left, #joystick-right {
                 width: 3em; height: 3em;
                 background-color: darkslategrey;
                 border-radius: 50%;
@@ -78,28 +78,23 @@
         </style>
     </head>
     <body>
-        <a href="/led.cgi?led=1"><button>ON</button></a>
-        <a href="/led.cgi?led=0"><button>OFF</button></a>
 
-        <div id="controller-shell-container"> 
+        <div id="controller-container-labeled"> 
             <div>RPC-C25 Robotic Arm Controller</div>
             <div>Move joysticks for controlling the end-effector</div>
             <div id="controller-container"> 
                 <div class="joystick-row">
-                    <div id="joystick-shell-container">
-                        <div id="joystick-container-1">
-                            <div id="joystick-1"></div>
+                    <div id="joystick-left-container-labeled">
+                        <div id="joystick-container-left">
+                            <div id="joystick-left"></div>
                         </div>
                         <div>X-Y Plane</div>
-                        
                     </div>
-                    
-                    <div id="joystick-shell-container">
-                        <div id="joystick-container-2">
-                            <div id="joystick-2"></div>
+                    <div id="joystick-right-container-labeled">
+                        <div id="joystick-container-right">
+                            <div id="joystick-right"></div>
                         </div>
                         <div>Z-Claw</div>
-                        
                     </div>
                 </div>
             </div>
@@ -107,110 +102,187 @@
 
         <!-- server scripts below -->
         <script>
-            function sendJoystickData(url, timeout, timeout_ms, sending_data) {
-                if(timeout) 
-                    clearTimeout(timeout);
-                timeout = setTimeout(() => {
-                    if(sending_data)
-                        return;
-                    sending_data = true;
-                
-                    fetch(url)
-                        .then(response => console.log("Joystick data sent:", url))
-                        .catch(error => console.error("Error sending joystick data:", error));
-                }, timeout_ms); 
-            }
 
-            function setupJoystick(joystick_element, container_element, controller) {
+            function setupJoystick(joystick_element, container_element, joystick_container_labeled_element, controller) {
                 // "this" joystick elements
                 const joystick = joystick_element;
                 const container = container_element;
+                const container_labeled = joystick_container_labeled_element;
                 // set initial position and status 
                 joystick.style.left = "50%";
                 joystick.style.top = "50%";
                 let is_dragging = false; 
+                // web server data handling
                 let is_sending_data = false;
                 let update_timeout = null;
-                let timeout_ms = 200;
+                let timeout_ms = 100;
 
-                let prev_delta_x = 0;
-                let prev_delta_y = 0;
+                // most recent web server joystick data sent
+                let prev_sent_delta_x = 0;
+                let prev_sent_delta_y = 0;
+                // joysticl position
                 let delta_x = 0;
                 let delta_y = 0;
                 
-
-                function guiDown(event) {
-                    is_dragging = true;
-                    event.preventDefault();    
-                }
-
-                function guiUp() {
-                    is_dragging = false; 
-                    // drift joystick to center position
-                    joystick.style.transition = "left 0.5s ease-out, top 0.5s ease-out";
-                    joystick.style.left = "50%";
-                    joystick.style.top = "50%";
-                }
-
-                function guiMove(event) {
-                    // do nothing if not moving cursor
-                    if(!is_dragging) 
-                        return;
-
-                    const rect = container.getBoundingClientRect();
-                    const center_x = rect.left + (rect.width / 2);
-                    const center_y = rect.top + (rect.height / 2);
-
+                // coordinate position of the client closest to its joystick
+                function clientCoords(event, joystick_x, joystick_y) {
+                    // closest client position and its min distance to joystick
                     let client_x, client_y;
+                    let min_distance = null;
                     if(event.type.startsWith("touch")) {
-                        client_x = event.touches[0].clientX;
-                        client_y = event.touches[0].clientY;
+                        for(touch of event.touches) { 
+                            let touch_x = event.touches[0].clientX;
+                            let touch_y = event.touches[0].clientY;
+                            let distance = Math.sqrt((touch_x * touch_x) + (touch_y * touch_y));
+                            if(min_distance == null || distance < min_distance) {
+                                min_distance = distance;
+                                client_x = touch_x;
+                                client_y = touch_y;
+                            }
+                        }
                     }
                     else {
                         client_x = event.clientX;
                         client_y = event.clientY;
                     }
 
-                    delta_x = client_x - center_x;
-                    delta_y = client_y - center_y;
-                    const distance = Math.sqrt((delta_x * delta_x) + (delta_y * delta_y));
-                    const max_radius = (rect.width / 2) - (joystick.clientWidth / 2);
+                    return {x: client_x, y: client_y};
+                }
 
-                    // restrict movement to inside the outer-circle joystick container
-                    if(distance > max_radius) {
-                        const angle = Math.atan2(delta_y, delta_x);
-                        delta_x = max_radius * Math.cos(angle);
-                        delta_y = max_radius * Math.sin(angle);
+                async function sendJoystickData(url, timeout_ms) {
+                    // do nothing if already sending data
+                    if(is_sending_data) 
+                        return;
+
+                    // send data
+                    is_sending_data = true;
+                    let end_successful_fetch = false; 
+                    
+                    // initiate timeout
+                    update_timeout = setTimeout(() => {
+                        // reset flag if not successful
+                        if(!end_successful_fetch) { 
+                            is_sending_data = false;
+                        }
+                    }, timeout_ms);
+
+                    try { // handle fetching data
+                        // await url fetch for sent data
+                        const response = await fetch(url);
+                        if(response.ok) 
+                            end_successful_fetch = true;
+                
+                    } // catch fetching errors 
+                    catch(error) {
+                        console.error("error sending joystick data: ", error);
                     }
+                    finally { // set sending flag to false; done sending
+                        clearTimeout(update_timeout);
+                        is_sending_data = false; 
+                    }
+                }
 
-                    joystick.style.transition = "left 0.2s ease-out, top 0.2s ease-out";
-                    joystick.style.left = `${(rect.width / 2) + delta_x}px`;
-                    joystick.style.top = `${(rect.height / 2) + delta_y}px`;
+                // flags the joystick is being dragged
+                function guiDown(event) {
+                    is_dragging = true;
+                    event.preventDefault();
+                    // motion profile movement
+                    joystick.style.transition = "left 0.2s ease-out, top 0.2s ease-out";   
+                }
 
-                    if(Math.abs(delta_x - prev_delta_x) > 2 || Math.abs(delta_y - prev_delta_y) > 2) { 
-                        prev_delta_x = delta_x;
-                        prev_delta_y = delta_y;
+                // releases dragged joystick flag
+                async function guiUp(event) {
+                    is_dragging = false; 
+                    // update joystick position
+                    const container_rect = container.getBoundingClientRect(); // joystick container inscribed in the container_labeled 
+                    joystick.style.left = `${(container_rect.width / 2)}px`;
+                    joystick.style.top = `${(container_rect.height / 2)}px`; 
+                    // drift joystick to center position
+                    joystick.style.transition = "left 0.5s ease-out, top 0.5s ease-out";
+                    joystick.style.left = "50%";
+                    joystick.style.top = "50%";
+                }
+
+                // always runs on the document
+                async function guiMove(event) {
+                    // do nothing if not clicked/touched down (dragging joystick)
+                    if(is_dragging) { 
+                        // doc info
+                        const doc_width = document.documentElement.scrollWidth;
+                        const doc_height = document.documentElement.scrollHeight;
+
+                        // joystick position on doc
+                        const container_rect = container.getBoundingClientRect(); // joystick container inscribed in the container_labeled 
+                        const container_labeled_rect = container_labeled.getBoundingClientRect(); // labeled container circumscribed about the joystick container
+                        const center_x = container_rect.left + (container_rect.width / 2);
+                        const center_y = container_rect.top + (container_rect.height / 2);
+                        
+                        let client_pos = clientCoords(event, center_x, center_y);
+                        // x and y client proximity to joystick
+                        delta_x = client_pos.x - center_x;
+                        delta_y = client_pos.y - center_y;
+
+                        // distance away a client can get from the joystick
+                        // the distance between the joystick and the horizontal doc midline 
+                        let max_client_proximity = Math.abs(center_x - (doc_width / 2));
+                        let client_proximity = Math.sqrt((delta_x * delta_x) + (delta_y * delta_y));
+                        
+                        // do nothing if out of proximity
+                        if(client_proximity >= max_client_proximity) 
+                            return; // filters out unwanted clicks/touches we don't want to listen to
+
+                        // max radius from joystick the client to move the joystick while hovering above it
+                        const max_hovering_radius = (container_rect.width / 2) - (joystick.clientWidth / 2);
+                        // max radius from joystick to client to move the joystick at all
+                        const max_moving_radius = (container_labeled_rect.width / 2);
+                        // restrict movement to inside the outer-circle joystick container
+                        if(client_proximity > max_hovering_radius) {
+                            // joystick gets as close to the client while still staying confined to its container
+                            const angle = Math.atan2(delta_y, delta_x);
+                            delta_x = max_hovering_radius * Math.cos(angle);
+                            delta_y = max_hovering_radius * Math.sin(angle);
+                        }
+
+                        // update joystick position
+                        joystick.style.left = `${(container_rect.width / 2) + delta_x}px`;
+                        joystick.style.top = `${(container_rect.height / 2) + delta_y}px`; 
+
+                        // stop moving joystick if out of moving proximity
+                        if(client_proximity > max_moving_radius) {
+                            // zero joystick position
+                            delta_x = 0;
+                            delta_y = 0;
+                            await guiUp(event); // end moving
+                        }
+                        
+                        // handle web server data sending
                         const url = `/joy.cgi?${controller}_dx=${(delta_x).toFixed(2)}&${controller}_dy=${(delta_y).toFixed(2)}`;
-                        sendJoystickData(url, update_timeout, timeout_ms, is_sending_data);
+                        setTimeout(() => {sendJoystickData(url, timeout_ms);}, timeout_ms);
+                    } 
+                    else {
+                        delta_x = 0;
+                        delta_y = 0;
+                        const url = `/joy.cgi?${controller}_dx=0&${controller}_dy=0`;
+                        setTimeout(() => {sendJoystickData(url, timeout_ms);}, timeout_ms);
                     }
                 }
 
                 // update flag by mouse and touch-screen activity
                 joystick.addEventListener("mousedown", guiDown);
-                document.addEventListener("mouseup", guiUp);
                 document.addEventListener("mousemove", guiMove);
                 joystick.addEventListener("touchstart", guiDown);
-                document.addEventListener("touchend", guiUp);
                 document.addEventListener("touchmove", guiMove);
             }
 
-            const joystick_left = document.getElementById("joystick-1");
-            const container_left = document.getElementById("joystick-container-1");
-            setupJoystick(joystick_left, container_left, "joyl");
+            const joystick_left = document.getElementById("joystick-left");
+            const container_left = document.getElementById("joystick-container-left");
+            const joystick_left_container_labeled = document.getElementById("joystick-left-container-labeled"); 
+            setupJoystick(joystick_left, container_left, joystick_left_container_labeled, "joyl");
            
-            const joystick_right = document.getElementById("joystick-2");
-            const container_right = document.getElementById("joystick-container-2");
-            setupJoystick(joystick_right, container_right, "joyr"); 
+            const joystick_right = document.getElementById("joystick-right");
+            const container_right = document.getElementById("joystick-container-right");
+            const joystick_right_container_labeled = document.getElementById("joystick-right-container-labeled");
+            setupJoystick(joystick_right, container_right, joystick_right_container_labeled, "joyr"); 
 
         </script>
     </body>
