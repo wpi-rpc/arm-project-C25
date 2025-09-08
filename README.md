@@ -3,6 +3,8 @@
 ## Project Overview: 
 This will be the project overview!
 
+<a href="https://www.youtube.com">Link</a>
+
 ## Setup:
 For the setup of this project a Rasberry Pi 3B model is used. It is required to `ssh` into the Raspberry Pi (PI) by either the local or actual IP address of the device. It is also worth mentioning that VSCode IDE was used with the *Remote - SSH* extension for working on this project and its software. For accessing the PI by `ssh`, either `ssh rpc-arm@raspberrypi.local` or `ssh rpc-arm@42.10.0.1` can be used for access over ethernet. 
 
