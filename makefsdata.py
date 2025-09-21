@@ -9,7 +9,7 @@ import binascii
 
 #Create file to write output into
 output = open('htmldata.c', 'w') 
-
+# added comment
 #Traverse directory, generate list of files
 files = list()
 os.chdir('./html_files')
