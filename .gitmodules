@@ -1,0 +1,3 @@
+[submodule "deps/demo-repository"]
+	path = deps/demo-repository
+	url = ./../demo-repository
